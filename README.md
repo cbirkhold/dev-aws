@@ -2,6 +2,25 @@
 
 Tools and scripts for AWS development.
 
+## Scripts
+
+### aws-cloudformation-install-deploy-key-from-secrets-manager.sh
+
+Retrieves a Base64-encoded SSH deploy key from AWS Secrets Manager and installs it for use with Git operations on EC2 instances.
+
+**Usage:**
+
+```bash
+# Optional
+apt-get update
+
+# Set required environment variables
+SECRET_REGION=us-west-1 \
+SECRET_ID=my-secret-id \
+SECRET_KEY=DEPLOY_KEY_BASE64 \
+  ./scripts/aws-cloudformation-install-deploy-key-from-secrets-manager.sh host.com
+```
+
 ## Development
 
 ### Prerequisites
