@@ -13,6 +13,13 @@ create_mock_aws() {
   chmod +x "$1/aws"
 }
 
+create_mock_aws_secretsmanager() {
+  # Mock only 'aws secretsmanager' - proxy other commands to real AWS CLI
+  # shellcheck disable=SC2016
+  printf '#!/bin/bash\nif [[ "$1" == "secretsmanager" ]]; then\n  echo '\''{"DEPLOY_KEY_BASE64": "dGVzdC1wcml2YXRlLWtleS1jb250ZW50"}'\''\nelse\n  /usr/local/bin/aws "$@"\nfi\n' > "$1/aws"
+  chmod +x "$1/aws"
+}
+
 setup() {
   load 'lib/bats-support/load'
   load 'lib/bats-assert/load'
@@ -117,4 +124,40 @@ teardown() {
   assert_output --partial "Host host.com"
   assert_output --partial "IdentityFile $_SSH_DIR/deploy-key"
   assert_output --partial "StrictHostKeyChecking accept-new"
+}
+
+# Integration tests - only run when INTEGRATION_TESTS=1
+
+@test "integration: full script with real AWS CLI install" {
+  if [[ "$(uname)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
+    skip "This test requires Linux x86_64"
+  fi
+
+  if [[ "${INTEGRATION_TESTS:-}" != "1" ]]; then
+    skip "Set INTEGRATION_TESTS=1 to run"
+  fi
+
+  # Create fixture and mock directories (cleaned up by teardown)
+  FIXTURE_DIR="$(mktemp -d)"
+  MOCK_DIR="$(mktemp -d)"
+
+  # Create mock commands
+  create_mock_apt_get "$MOCK_DIR"
+  create_mock_aws_secretsmanager "$MOCK_DIR"
+
+  # Set up environment
+  export PATH="$MOCK_DIR:$PATH"
+  export _SSH_DIR="$FIXTURE_DIR/.ssh"
+  export SECRET_REGION="us-west-1"
+  export SECRET_ID="my-secret-id"
+  export SECRET_KEY="DEPLOY_KEY_BASE64"
+
+  # Run script
+  run bash "$SCRIPT" host.com
+  assert_success
+
+  # Verify AWS CLI exists
+  run aws --version
+  assert_success
+  assert_output --partial "aws-cli/2."
 }

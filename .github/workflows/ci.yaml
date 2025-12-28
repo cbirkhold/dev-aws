@@ -29,5 +29,7 @@ jobs:
       - name: Install bats helpers
         run: ./tests/setup-bats.sh
 
-      - name: Run tests
-        run: bats tests
+      - name: Run unit/integration tests
+        env:
+          INTEGRATION_TESTS: "1"
+        run: bats --print-output-on-failure --show-output-of-passing-tests --verbose-run tests
