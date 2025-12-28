@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: Linting (shellcheck)
+        entry: shellcheck
+        language: system
+        types: [file, shell]
+  - repo: local
+    hooks:
+      - id: bats
+        name: Testing (bats)
+        entry: bats
+        language: system
+        types: [file, bats]
